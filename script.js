@@ -14,7 +14,7 @@ const CHUNK_WIDTH = 16;
 const CHUNK_HEIGHT = 64;
 
 
-
+console.log("Asdfasdf");
 //textures
 const texture = new THREE.TextureLoader().load( "textures/txtr.png" );
 texture.magFilter = THREE.NearestFilter;
