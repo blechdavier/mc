@@ -1,4 +1,4 @@
-const CHUNK_WIDTH = 16;
+	const CHUNK_WIDTH = 32;
 	const CHUNK_HEIGHT = 64;
 	
 	const s = 0;//small number
@@ -14,6 +14,11 @@ const CHUNK_WIDTH = 16;
     var normals = [];
     var uvs = [];
     var indices = [];
+
+	var transparentpositions = [];
+    var transparentnormals = [];
+    var transparentuvs = [];
+    var transparentindices = [];
 	
 	let blocktextures = [//bad form to write this with lowercase
 		{},//air textures
@@ -156,13 +161,15 @@ const CHUNK_WIDTH = 16;
 
 	function isblock(x, y, z) {
 
-		if(valuenoise(seed, x/20, y/20, z/20)<constrain(map(y, 0, 20, 0, 0.5), 0.5, 0)) {
-			return(false);
-		}
+		//if(valuenoise(seed, x/20, y/20, z/20)<constrain(map(y, 0, 20, 0, 0.5), 0.5, 0)) {
+		//	return(false);
+		//}
 
 		//2d noise
 		return(y<=map(fractalnoise(seed, x, 0, z), 0, 1, 1, 64));//This layers noise to make the terrain look more natural.
 
+		//simple 2d noise
+		//return(y<valuenoise(seed, x/30, 0, z/30)*64);
 		//3d noise
 		//return(0.5<=fractalnoise(seed, x, y, z));//This layers noise to make the terrain look more natural.
 	}
@@ -199,55 +206,57 @@ const CHUNK_WIDTH = 16;
 		}
 	}
 	
-	function meshChunk() {
+	function meshChunk(x, z) {
 		for(let i = 0; i<CHUNK_WIDTH; i++) {
             for(let j = 0; j<CHUNK_WIDTH; j++) {
                 for(let k = 0; k<CHUNK_HEIGHT; k++) {
                     //throughout the following code snippet, the i, k, j is intentional.  This is because i is x, j is z, and k is y.
                     //console.log(blocks);
-                    currentblock = blocks[i][j][k];
+					chunkOffX = x*CHUNK_WIDTH;
+					chunkOffZ = z*CHUNK_WIDTH;
+                    currentblock = blocks[i+chunkOffX][j+chunkOffZ][k];
                     if(currentblock>0) {
-                        topblock = blocks[i][j][k+1];
-                        bottomblock = blocks[i][j][k-1];
-                        eastblock = blocks[i+1][j][k];
-                        westblock = blocks[i-1][j][k];
-                        northblock = blocks[i][j+1][k];
-                        southblock = blocks[i][j-1][k];
+                        topblock = blocks[i+chunkOffX][j+chunkOffZ][k+1];
+                        bottomblock = blocks[i+chunkOffX][j+chunkOffZ][k-1];
+                        eastblock = blocks[i+1+chunkOffX][j+chunkOffZ][k];
+                        westblock = blocks[i-1+chunkOffX][j+chunkOffZ][k];
+                        northblock = blocks[i+chunkOffX][j+1+chunkOffZ][k];
+                        southblock = blocks[i+chunkOffX][j-1+chunkOffZ][k];
                         if(transparentblock(currentblock)) {
                             if(differentblock(currentblock, topblock)) {
-                                face(i, k+1, j+1, i+1, k+1, j+1, i+1, k+1, j, i, k+1, j);
-                                addUVs(blocktextures[currentblock].yplus);
-                                addNormals(0, 1, 0);
+                                transparentface(i, k+1, j+1, i+1, k+1, j+1, i+1, k+1, j, i, k+1, j);
+                                transparentaddUVs(blocktextures[currentblock].yplus);
+                                transparentaddNormals(0, 1, 0);
                                 // console.log("top current: "+currentblock+", other: "+topblock);
                             }
                             if(differentblock(currentblock, bottomblock)) {
-                                face(i, k, j, i+1, k, j, i+1, k, j+1, i, k, j+1);
-                                addUVs(blocktextures[currentblock].yminus);
-                                addNormals(0, -1, 0);
+                                transparentface(i, k, j, i+1, k, j, i+1, k, j+1, i, k, j+1);
+                                transparentaddUVs(blocktextures[currentblock].yminus);
+                                transparentaddNormals(0, -1, 0);
                                 // console.log("bottom current: "+currentblock+", other: "+bottomblock);
                             }
                             if(differentblock(currentblock, northblock)) {
-                                face(i+1, k+1, j+1, i, k+1, j+1, i, k, j+1, i+1, k, j+1);
-                                addUVs(blocktextures[currentblock].zplus);
-                                addNormals(0, 0, 1);
+                                transparentface(i+1, k+1, j+1, i, k+1, j+1, i, k, j+1, i+1, k, j+1);
+                                transparentaddUVs(blocktextures[currentblock].zplus);
+                                transparentaddNormals(0, 0, 1);
                                 // console.log("north current: "+currentblock+", other: "+northblock);
                             }
                             if(differentblock(currentblock, southblock)) {
-                                face(i, k+1, j, i+1, k+1, j, i+1, k, j, i, k, j);
-                                addUVs(blocktextures[currentblock].zminus);
-                                addNormals(0, 0, -1);
+                                transparentface(i, k+1, j, i+1, k+1, j, i+1, k, j, i, k, j);
+                                transparentaddUVs(blocktextures[currentblock].zminus);
+                                transparentaddNormals(0, 0, -1);
                                 // console.log("south current: "+currentblock+", other: "+southblock);
                             }
                             if(differentblock(currentblock, eastblock)) {
-                                face(i+1, k+1, j, i+1, k+1, j+1, i+1, k, j+1, i+1, k, j);
-                                addUVs(blocktextures[currentblock].xplus);
-                                addNormals(1, 0, 0);
+                                transparentface(i+1, k+1, j, i+1, k+1, j+1, i+1, k, j+1, i+1, k, j);
+                                transparentaddUVs(blocktextures[currentblock].xplus);
+                                transparentaddNormals(1, 0, 0);
                                 // console.log("east current: "+currentblock+", other: "+eastblock);
                             }
                             if(differentblock(currentblock, westblock)) {
-                                face(i, k+1, j+1, i, k+1, j, i, k, j, i, k, j+1);
-                                addUVs(blocktextures[currentblock].xminus);
-                                addNormals(-1, 0, 0);
+                                transparentface(i, k+1, j+1, i, k+1, j, i, k, j, i, k, j+1);
+                                transparentaddUVs(blocktextures[currentblock].xminus);
+                                transparentaddNormals(-1, 0, 0);
                                 // console.log("west current: "+currentblock+", other: "+westblock);
                             }
                         }
@@ -330,17 +339,46 @@ const CHUNK_WIDTH = 16;
             normals.push(x, y, z);
         }
     }
+
+	function transparentface(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) {
+        l = transparentpositions.length/3;
+		transparentpositions.push(x1, y1, z1);//add the first vertex to the model
+		transparentpositions.push(x2, y2, z2);//add the second vertex to the model
+        transparentpositions.push(x3, y3, z3);//add the third vertex to the model
+		transparentpositions.push(x4, y4, z4);//add the last vertex to the model
+        transparentindices.push(l, l+1, l+2, l+2, l+3, l);
+	}
+	
+	function transparentaddUVs(arr) {
+		x = arr[0]/atlasWidth;
+		y = arr[1]/atlasWidth;
+        c = 1/atlasWidth;
+		transparentuvs.push(x, y);
+		transparentuvs.push(x+c, y);
+		transparentuvs.push(x+c, y+c);
+        transparentuvs.push(x, y+c);
+	}
+
+    function transparentaddNormals(x, y, z) {
+        for(let i = 0; i<4; i++) {
+            transparentnormals.push(x, y, z);
+        }
+    }
 	
 	onmessage = function(e) {
-        //blocks = [];
+        //blocks = [[[]]];
         positions = [];
         normals = [];
         uvs = [];
         indices = [];
+		transparentpositions = [];
+        transparentnormals = [];
+        transparentuvs = [];
+        transparentindices = [];
 		seed = e.data[0];
 		createChunk(e.data[1], e.data[2], seed);
-        meshChunk();
-		postMessage([positions, normals, uvs, indices, e.data[1], e.data[2]]);
+        meshChunk(e.data[1], e.data[2]);
+		postMessage([positions, normals, uvs, indices, e.data[1], e.data[2], transparentpositions, transparentnormals, transparentuvs, transparentindices]);
 	}
 
 
