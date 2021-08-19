@@ -1,5 +1,5 @@
 	const CHUNK_WIDTH = 32;
-	const CHUNK_HEIGHT = 64;
+	const CHUNK_HEIGHT = 1;
 	
 	const s = 0;//small number
 
@@ -162,11 +162,14 @@
 	function isblock(x, y, z) {
 
 		//if(valuenoise(seed, x/20, y/20, z/20)<constrain(map(y, 0, 20, 0, 0.5), 0.5, 0)) {
-		//	return(false);
+			//return(false);
 		//}
 
 		//2d noise
-		return(y<=map(fractalnoise(seed, x, 0, z), 0, 1, 1, 64));//This layers noise to make the terrain look more natural.
+		//return(y<=map(fractalnoise(seed, x, 0, z), 0, 1, 1, 64));//This layers noise to make the terrain look more natural.
+		
+		//flat plane
+		return y==0;
 
 		//simple 2d noise
 		//return(y<valuenoise(seed, x/30, 0, z/30)*64);
@@ -306,13 +309,14 @@
 	}
 	
 	function differentblock(first, last) {
-		if(first==8 && last!=8 && transparentblock(last)) {
-			return true;
-		}
-		if(first==7 && last !=7 && transparentblock(last)) {
-			return true;
-		}
-		return false;
+		// if(first==8 && last!=8 && transparentblock(last)) {
+		// 	return true;
+		// }
+		// if(first==7 && last !=7 && transparentblock(last)) {
+		// 	return true;
+		// }
+		// return false;
+		return first!==last && transparentblock(last);
 	}
 	
 	function face(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) {

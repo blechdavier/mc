@@ -1,5 +1,5 @@
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x4ac5be, 0.003);
+scene.fog = new THREE.FogExp2(0x4ac5be, 0.001);
 scene.background = new THREE.Color( 0x4ac5be );
 
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -7,16 +7,25 @@ const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.inner
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setPixelRatio(window.devicePixelRatio || 1);
 document.body.appendChild( renderer.domElement );
 
+//chunk management
+var PlayerChunkX = 0;
+var PlayerChunkZ = 0;
+var PrevChunkX = null;
+var PrevChunkZ = null;
 const chunks = [];
 const loadedChunks = [];
 const geometries = [];
-
-var renderDistance = 16;
+var chunkpattern = [];
 
 const CHUNK_WIDTH = 32;
 const CHUNK_HEIGHT = 64;
+
+var renderDistance = 4;
+//scene.fog = new THREE.Fog(0x4ac5be, renderDistance*CHUNK_WIDTH/2, renderDistance*CHUNK_WIDTH)
+generateChunkPattern(renderDistance);
 
 //mouse controls
 var mousex = 0;
@@ -82,13 +91,29 @@ else {
 function animate() {
 
     moveCamera();
-    addChunksToQueue();
+    PlayerChunkX = Math.floor((camera.position.x-8)/CHUNK_WIDTH);
+    PlayerChunkZ = Math.floor((camera.position.z-8)/CHUNK_WIDTH);
+
+    if(PlayerChunkX !== PrevChunkX || PlayerChunkZ !== PrevChunkZ) {
+        for(let i = 0; i<loadedChunks.length; i++) {
+            if(-1 != chunkpattern.findIndex(el => el[0]==loadedChunks[i][0] && el[1]==loadedChunks[i][1])) {
+                scene.remove( chunks[i] );
+                loadedChunks.splice(i, 1);
+                chunks.splice(i, 1);
+                geometries.splice(i, 1);
+                i--;
+            }
+        }
+        addChunksToQueue();
+    }
+
     requestAnimationFrame( animate );
     renderer.render( scene, camera );
 
-};
+    PrevChunkX = PlayerChunkX;
+    PrevChunkZ = PlayerChunkZ;
 
-animate();
+};
 
 function receivedWorkerMessage(event) {
 
@@ -135,16 +160,18 @@ function receivedWorkerMessage(event) {
 
 
 function addChunksToQueue() {
-    for(let i = Math.floor(camera.position.x/CHUNK_WIDTH-renderDistance); i<Math.ceil(camera.position.x/CHUNK_WIDTH+renderDistance); i++) {
-        for(let j = Math.floor(camera.position.z/CHUNK_WIDTH-renderDistance); j<Math.ceil(camera.position.z/CHUNK_WIDTH+renderDistance); j++) {
-            if(!loadedChunks.includes(i*10000+j)) { 
-                workers[activeWorker].postMessage([61, i, j]);
-                activeWorker++;
-                if(activeWorker=workers.length) {
-                    activeWorker = 0;
-                }
-                loadedChunks.push(i*10000+j)
+    for(let i = 0; i<chunkpattern.length; i++) {
+        chunkX = chunkpattern[i][0]+PlayerChunkX;
+        chunkZ = chunkpattern[i][1]+PlayerChunkZ;
+        //console.log(loadedChunks.findIndex(el => el[0]==0 && el[1]==0))
+        if(-1==loadedChunks.findIndex(el => el[0]==chunkX && el[1]==chunkZ)) { // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex
+            workers[activeWorker].postMessage([61, chunkX, chunkZ]);
+            activeWorker++;
+            if(activeWorker=workers.length) {
+                activeWorker = 0;
             }
+            //console.log([chunkX, chunkZ]);
+            loadedChunks.push(([chunkX, chunkZ]))
         }
     }
 }
@@ -224,3 +251,34 @@ function moveCamera() {
     camera.position.y += cameraVel[1];
     camera.position.z += cameraVel[2];
 }
+
+function distsquared(x1, y1, x2, y2) {
+    a = x1-x2;
+    b = y1-y2;
+    return(a*a+b*b);
+}
+
+function generateChunkPattern(dist) {
+    distances = [];
+    for(let i = -dist; i<dist+1; i++) {
+        for(let j = -dist; j<dist+1; j++) {
+            chunkdist = distsquared(i, j, 0, 0);
+            if(chunkdist<=dist*dist) {
+                let k = 0;
+                for(k = 0; k<distances.length; k++) {
+                    if(chunkdist<distances[k])
+                        break;
+                }
+                distances.splice(k, 0, chunkdist);
+                chunkpattern.splice(k, 0, [i, j]);
+            }
+        }
+    }
+    // console.log(chunkpattern)
+    distances = undefined;//possibly saves memory but not sure
+}
+
+
+
+
+animate();
