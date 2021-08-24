@@ -1,5 +1,5 @@
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x4ac5be, 0.001);
+//scene.fog = new THREE.FogExp2(0x4ac5be, 0.001);
 scene.background = new THREE.Color( 0x4ac5be );
 
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
@@ -23,8 +23,8 @@ var chunkpattern = [];
 const CHUNK_WIDTH = 32;
 const CHUNK_HEIGHT = 64;
 
-var renderDistance = 4;
-//scene.fog = new THREE.Fog(0x4ac5be, renderDistance*CHUNK_WIDTH/2, renderDistance*CHUNK_WIDTH)
+var renderDistance = 8;
+scene.fog = new THREE.Fog(0x4ac5be, renderDistance*CHUNK_WIDTH/2, renderDistance*CHUNK_WIDTH)
 generateChunkPattern(renderDistance);
 
 //mouse controls
@@ -97,11 +97,11 @@ function animate() {
     if(PlayerChunkX !== PrevChunkX || PlayerChunkZ !== PrevChunkZ) {
         for(let i = 0; i<loadedChunks.length; i++) {
             if(-1 != chunkpattern.findIndex(el => el[0]==loadedChunks[i][0] && el[1]==loadedChunks[i][1])) {
-                scene.remove( chunks[i] );
-                loadedChunks.splice(i, 1);
-                chunks.splice(i, 1);
-                geometries.splice(i, 1);
-                i--;
+                // scene.remove( chunks[i] );
+                // loadedChunks.splice(i, 1);
+                // chunks.splice(i, 1);
+                // geometries.splice(i, 1);
+                // i--;
             }
         }
         addChunksToQueue();

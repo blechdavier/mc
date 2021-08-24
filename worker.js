@@ -1,5 +1,5 @@
 	const CHUNK_WIDTH = 32;
-	const CHUNK_HEIGHT = 1;
+	const CHUNK_HEIGHT = 32;
 	
 	const s = 0;//small number
 
@@ -169,10 +169,11 @@
 		//return(y<=map(fractalnoise(seed, x, 0, z), 0, 1, 1, 64));//This layers noise to make the terrain look more natural.
 		
 		//flat plane
-		return y==0;
+		// return y==0;
 
 		//simple 2d noise
-		//return(y<valuenoise(seed, x/30, 0, z/30)*64);
+		return(y<valuenoise(seed, x/30, 0, z/30)*32);
+
 		//3d noise
 		//return(0.5<=fractalnoise(seed, x, y, z));//This layers noise to make the terrain look more natural.
 	}
